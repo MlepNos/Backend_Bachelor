@@ -1,0 +1,117 @@
+# ------------------------------
+# OS / Editors
+# ------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# ------------------------------
+# Environment & secrets
+# ------------------------------
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ------------------------------
+# Python
+# ------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Virtual envs
+.venv/
+venv/
+.pythonenv/
+.pyenv/
+
+# Packaging / build
+build/
+dist/
+downloads/
+.eggs/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+wheels/
+share/python-wheels/
+MANIFEST
+
+# Test / coverage / tooling
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.tox/
+.nox/
+.mypy_cache/
+.pytype/
+.pyre/
+.dmypy.json
+.ruff_cache/
+
+# Framework-specific
+local_settings.py
+instance/
+db.sqlite3
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ------------------------------
+# Node.js
+# ------------------------------
+node_modules/
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs / caches
+dist/
+build/
+.cache/
+.parcel-cache/
+.nyc_output/
+coverage/
+.tmp/
+temp/
+tmp/
+
+# Frameworks
+.next/
+.nuxt/
+.svelte-kit/
+
+# TypeScript
+*.tsbuildinfo
+typings/
+
+# Linters / formatters
+.eslintcache
+.stylelintcache
+.prettier-cache
+
+# ------------------------------
+# Misc
+# ------------------------------
+*.pid
+*.seed
+*.pid.lock
