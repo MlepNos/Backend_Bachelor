@@ -9,6 +9,7 @@ from langchain.prompts import PromptTemplate
 
 print("Arguments:", sys.argv, file=sys.stderr)
 
+# expected args: message, index_dir, optional mode ("chat" | "quiz")
 if len(sys.argv) < 3:
     print("Usage: python langchain_query.py <message> <index_dir> [mode]", file=sys.stderr)
     sys.exit(1)
@@ -18,7 +19,7 @@ index_dir = sys.argv[2]
 mode = sys.argv[3] if len(sys.argv) > 3 else "chat"
 print(f"Mode: {mode}", file=sys.stderr)
 
-# Load previous conversation history
+# load prior turns (if present) so the LLM can keep context
 history = ""
 try:
     with open("history.txt", "r", encoding="utf-8") as f:
@@ -26,27 +27,30 @@ try:
 except FileNotFoundError:
     print("No history.txt found. Starting fresh.", file=sys.stderr)
 
-# Load vector store
+# embeddings for retrieval
 embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 try:
+    # open FAISS index
     print("Loading vector store from:", index_dir, file=sys.stderr)
     vectorstore = FAISS.load_local(index_dir, embedding_model, allow_dangerous_deserialization=True)
 
+    # retrieve top-k relevant chunks for the user message
     print("Searching similar documents...", file=sys.stderr)
     docs = vectorstore.similarity_search(message, k=4)
 
+    # join retrieved text into a single context blob
     print(" Querying with message:", message)
     print(" Index loaded from:", index_dir)
     print(" Top match snippet:", docs[0].page_content[:200] if docs else "No results found")
-
     context = "\n\n".join(doc.page_content for doc in docs)
     print("Context length:", len(context), file=sys.stderr)
 
-    # LLM setup
+    # local LLM served by Ollama
     llm = Ollama(model="llama3:3b", base_url="http://localhost:11434")
     print("LLM loaded", file=sys.stderr)
 
+    # prompt: quiz mode expects Q/A style; chat mode answers based on retrieved context only
     if mode == "quiz":
         prompt_template = PromptTemplate(
             input_variables=["history", "context", "question"],
@@ -71,9 +75,9 @@ Reply:
 """
         )
     else:
-       prompt_template = PromptTemplate(
-    input_variables=["history", "context", "question"],
-    template="""
+        prompt_template = PromptTemplate(
+            input_variables=["history", "context", "question"],
+            template="""
 You are a helpful tutor. You are answering based on the following course material:
 
 {context}
@@ -92,17 +96,14 @@ Student asks:
 
 Your response:
 """
-)
+        )
 
-
-
-
-
+    # run the chain with history + retrieved context + user message
     chain = LLMChain(llm=llm, prompt=prompt_template)
     print("Generating response...", file=sys.stderr)
     response = chain.run(history=history, context=context, question=message)
 
-    # Save updated history
+    # append this turn to history.txt (best-effort)
     try:
         with open("history.txt", "a", encoding="utf-8") as f:
             f.write(f"\nStudent: {message}\nAI: {response.strip()}\n")
@@ -110,11 +111,11 @@ Your response:
         print("Warning: could not update history.", file=sys.stderr)
         traceback.print_exc()
 
-    # ✅ FINAL CLEAN OUTPUT ONLY
+    # print only the final answer on stdout (server consumes this)
     print(response.strip(), file=sys.stdout)
 
-
 except Exception as e:
+    # retrieval failed (e.g., missing index). Try direct LLM as a fallback.
     print("Vector load failed. Falling back to direct model response.", file=sys.stderr)
     traceback.print_exc()
     try:
@@ -122,6 +123,7 @@ except Exception as e:
         response = llm.invoke(message)
         print(response.strip())
     except Exception:
+        # last-resort: bubble up failure
         print("Unable to respond at the moment.", file=sys.stderr)
         traceback.print_exc()
         sys.exit(1)

@@ -7,16 +7,16 @@ BASE_DIR = "knowledge_base"
 for course in os.listdir(BASE_DIR):
     course_path = os.path.join(BASE_DIR, course)
     if not os.path.isdir(course_path):
-        continue
+        continue  # skip non-folders
 
     print(f"🔍 Processing course: {course}")
 
-    # Determine paths
+    # expected paths inside each course folder
     pdf_path = os.path.join(course_path, "source.pdf")
     index_path = os.path.join(course_path, "faiss_index")
     store_path = os.path.join(course_path, "vector_store.pkl")
 
-    # Fall back to any .pdf file if source.pdf is missing
+    # fallback: use first .pdf if source.pdf is missing
     if not os.path.exists(pdf_path):
         for file in os.listdir(course_path):
             if file.lower().endswith(".pdf"):
@@ -27,7 +27,7 @@ for course in os.listdir(BASE_DIR):
             print(f"⛔ No PDF found in {course_path}, skipping...")
             continue
 
-    # 🔁 Always clean old data
+    # always rebuild: delete any previous index/store
     if os.path.exists(index_path):
         shutil.rmtree(index_path)
         print(f"🧹 Deleted old FAISS index: {index_path}")
@@ -35,7 +35,7 @@ for course in os.listdir(BASE_DIR):
         os.remove(store_path)
         print(f"🧹 Deleted old vector store: {store_path}")
 
-    # 🧠 Run indexer
+    # call the indexer to regenerate embeddings + FAISS
     print(f"📚 Regenerating vector store for: {course}")
     cmd = [
         "py", "-3.10", "langchain_indexer.py",
@@ -48,4 +48,5 @@ for course in os.listdir(BASE_DIR):
         subprocess.run(cmd, check=True)
         print(f"✅ Success for {course}\n")
     except subprocess.CalledProcessError as e:
+        # surfaces indexer failures per course, but continues loop
         print(f"❌ Failed for {course}: {e}\n")

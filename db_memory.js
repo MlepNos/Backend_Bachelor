@@ -1,6 +1,6 @@
 import { getPool } from "./db.js";
 
-// Check if a conversation exists, create if not
+// find the latest conversation with this title or create a new one
 export async function getOrCreateConversation(sessionTitle = "Untitled") {
   const db = getPool();
   console.log("🔍 Checking for existing conversation:", sessionTitle);
@@ -26,7 +26,7 @@ export async function getOrCreateConversation(sessionTitle = "Untitled") {
 
   return newConv.rows[0].id;
 }
-
+// fetch chat history (oldest first), normalized for LLMs
 export async function getConversationLog(conversationId) {
   const db = getPool();
   const res = await db.query(
@@ -37,7 +37,7 @@ export async function getConversationLog(conversationId) {
   );
   return res.rows.map(r => ({ role: r.role.toLowerCase(), message: r.content }));
 }
-
+// append one message to a conversation
 export async function saveMessage(conversationId, role, message) {
   const db = getPool();
   await db.query(
