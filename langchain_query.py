@@ -44,7 +44,7 @@ try:
     print("Context length:", len(context), file=sys.stderr)
 
     # LLM setup
-    llm = Ollama(model="llama3:8b", base_url="http://localhost:11434")
+    llm = Ollama(model="llama3:3b", base_url="http://localhost:11434")
     print("LLM loaded", file=sys.stderr)
 
     if mode == "quiz":
